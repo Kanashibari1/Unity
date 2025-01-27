@@ -8,16 +8,10 @@ public class Counter : MonoBehaviour
     private float _runTimer = 0;
     private bool _isWorking = false;
     private Coroutine _timerCoroutine;
+    private WaitForSeconds _wait = new WaitForSeconds(0.5f);
     public event Action Display;
 
     public float RunTimer => _runTimer;
-
-    private void Start()
-    {
-        _isWorking = true;
-
-        StartCoroutine(Count());
-    }
 
     private void Update()
     {
@@ -42,7 +36,7 @@ public class Counter : MonoBehaviour
 
             Display?.Invoke();
 
-            yield return new WaitForSeconds(0.5f);
+            yield return _wait;
         }
     }
 

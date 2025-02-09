@@ -1,0 +1,45 @@
+using System;
+using System.Collections;
+using UnityEngine;
+
+public class Cube : MonoBehaviour
+{
+    private Color _initialColor;
+    private Renderer _renderer;
+    private ColorChanger _changer;
+    private const float _minTime = 2f;
+    private const float _maxTime = 5f;
+    public event Action<Cube> OnCubeDeactivate;
+    private Color _defaultColor = Color.white;
+
+    private void Awake()
+    {
+        _changer = GetComponent<ColorChanger>();
+        _renderer = GetComponent<Renderer>();
+        _initialColor = _renderer.material.color;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        float lifeTime = UnityEngine.Random.Range(_minTime, _maxTime);
+
+        if (collision.gameObject.CompareTag("Platform"))
+        {
+            if (_renderer.material.color == _initialColor)
+            {
+                _changer.Changer();
+                StartCoroutine(TimeStop(lifeTime));
+            }
+        }
+    }
+
+    private IEnumerator TimeStop(float time)
+    {
+        WaitForSeconds _sleepTime = new(time);
+
+        yield return _sleepTime;
+
+        OnCubeDeactivate.Invoke(this);
+        _renderer.material.color = _defaultColor;
+    }
+}

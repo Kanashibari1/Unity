@@ -1,7 +1,6 @@
 using UnityEngine;
 
-[RequireComponent (typeof(MeshRenderer))]
-
+[RequireComponent(typeof(MeshRenderer))]
 public class ColorChanger : MonoBehaviour
 {
     private MeshRenderer _meshRenderer;
@@ -17,7 +16,7 @@ public class ColorChanger : MonoBehaviour
         _meshRenderer = GetComponent<MeshRenderer>();
     }
 
-    public void SetRandomColor()
+    public void Changer()
     {
         _meshRenderer.material.color = Random.ColorHSV(_hueMin, _hueMax, _saturationMin, _saturationMax, _valueMin, _valueMax);
     }

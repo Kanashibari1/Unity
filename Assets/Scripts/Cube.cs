@@ -1,31 +1,45 @@
+using System;
+using System.Collections;
 using UnityEngine;
-
-[RequireComponent(typeof(ColorChanger))]
 
 public class Cube : MonoBehaviour
 {
-    [SerializeField] private float _splitChance;
-    private ColorChanger _color;
-
-    public float SplitChance => _splitChance;
+    private Color _initialColor;
+    private Renderer _renderer;
+    private ColorChanger _changer;
+    private const float _minTime = 2f;
+    private const float _maxTime = 5f;
+    public event Action<Cube> OnCubeDeactivate;
+    private Color _defaultColor = Color.white;
 
     private void Awake()
     {
-        _color = GetComponent<ColorChanger>();
+        _changer = GetComponent<ColorChanger>();
+        _renderer = GetComponent<Renderer>();
+        _initialColor = _renderer.material.color;
     }
 
-    private void Start()
+    private void OnCollisionEnter(Collision collision)
     {
-        _color.SetRandomColor();
+        float lifeTime = UnityEngine.Random.Range(_minTime, _maxTime);
+
+        if (collision.gameObject.CompareTag("Platform"))
+        {
+            if (_renderer.material.color == _initialColor)
+            {
+                _changer.Changer();
+                StartCoroutine(TimeStop(lifeTime));
+            }
+        }
     }
 
-    public void Break()
+    private IEnumerator TimeStop(float time)
     {
-        Destroy(gameObject);
-    }
+        WaitForSeconds _sleepTime = new(time);
 
-    public void UpdateSplitChance(float splitChance)
-    {
-        _splitChance = splitChance;
+        yield return _sleepTime;
+
+        OnCubeDeactivate.Invoke(this);
+        _renderer.material.color = _defaultColor;
     }
 }

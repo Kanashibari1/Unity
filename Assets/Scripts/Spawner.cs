@@ -1,35 +1,57 @@
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
-
-[RequireComponent(typeof(Rigidbody))]
+using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    private const float ParentScale = 0.5f;
-    private List<Rigidbody> rigidbodies = new();
-
     [SerializeField] private Cube _cubePrefab;
 
-    public List<Rigidbody> Spawn(Vector3 position, Vector3 localScale, float splitChance)
+    private ObjectPool<Cube> _pool;
+    private float _spawnTime = 1f;
+    private float _minRandomPosition = -15f;
+    private float _maxRandomPosition = 15f;
+    private int _positionY = 15;
+
+    private void Awake()
     {
-        int maxNumber = 6;
-        int minNumber = 2;
+        _pool = new ObjectPool<Cube>(Create, OnGetCube, Release, Destroy, true);
+    }
 
-        int randomNumber = Random.Range(minNumber, maxNumber + 1);
+    private void Start()
+    {
+        StartCoroutine(SpawnRoutine());
+    }
 
-        for (int i = 0; i < randomNumber; i++)
+    private void OnGetCube(Cube cube)
+    {
+        cube.OnCubeDeactivate += OnCubeDeactivated;
+        cube.transform.position = new Vector3(Random.Range(_minRandomPosition, _maxRandomPosition), _positionY, Random.Range(_minRandomPosition, _maxRandomPosition));
+        cube.gameObject.SetActive(true);
+    }
+
+    private void OnCubeDeactivated(Cube cube)
+    {
+        cube.OnCubeDeactivate -= OnCubeDeactivated;
+        _pool.Release(cube);
+    }
+
+    private void Release(Cube cube)
+    {
+        cube.gameObject.SetActive(false);
+    }
+
+    private Cube Create()
+    {
+        return GameObject.Instantiate(_cubePrefab);
+    }
+
+    private IEnumerator SpawnRoutine()
+    {
+        while (true)
         {
-            Vector3 randomPosition = position + Random.insideUnitSphere;
-            Cube cube = Instantiate(_cubePrefab, randomPosition, Quaternion.identity);
-            cube.transform.localScale = localScale * ParentScale;
-            cube.UpdateSplitChance(splitChance);
-            Rigidbody rigidbody = cube.GetComponent<Rigidbody>();
-
-            rigidbody.useGravity = false;
-
-            rigidbodies.Add(rigidbody);
+            WaitForSeconds waitForSeconds = new(_spawnTime);
+            _pool.Get();
+            yield return waitForSeconds;
         }
-
-        return rigidbodies;
     }
 }
